@@ -34,7 +34,7 @@ class ExpenseViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExpenseUiState())
 
-    fun addExpense(amount: Double, category: ExpenseCategory, note: String?, date: Long){
+    fun addExpense(amount: Double, category: ExpenseCategory,  date: Long, note: String?){
         viewModelScope.launch {
             repository.insertExpense(
                 ExpenseEntity(
@@ -50,6 +50,12 @@ class ExpenseViewModel @Inject constructor(
     fun deleteExpense(expense: ExpenseEntity) {
         viewModelScope.launch {
             repository.deleteExpense(expense)
+        }
+    }
+
+    fun updateExpense(expense: ExpenseEntity){
+        viewModelScope.launch{
+            repository.updateExpense(expense)
         }
     }
 
