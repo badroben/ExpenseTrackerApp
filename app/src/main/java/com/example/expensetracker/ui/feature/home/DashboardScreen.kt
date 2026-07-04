@@ -1,5 +1,7 @@
 package com.example.expensetracker.ui.feature.home
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -44,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.expensetracker.data.local.CategoryTotal
-import com.example.expensetracker.domain.model.ExpenseCategory
 import com.example.expensetracker.domain.model.SpendingPeriod
 import com.example.expensetracker.ui.feature.expenses.ExpenseViewModel
 import com.example.expensetracker.ui.theme.CardPaper
@@ -184,29 +186,6 @@ fun DashboardScreen(
                 }
             }
             item { Spacer(Modifier.height(24.dp)) }
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "By category",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Ink
-                    )
-                    Text(
-                        "See all",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MintDeep,
-                        modifier = Modifier.clickable { onSeeAllClicked() }
-                    )
-                }
-                Spacer(Modifier.height(12.dp))
-            }
-
             if (categoryTotals.isEmpty()) {
                 item {
                     EmptyHint(
@@ -215,53 +194,12 @@ fun DashboardScreen(
                     )
                 }
             } else {
-                items(categoryTotals.size) { index ->
-                    val (category, total) = categoryTotals[index]
-                    CategoryRow(category = category, total = total)
-                    Spacer(Modifier.height(10.dp))
+                item {
+                    CategoryBarChart(categoryTotals, onSeeAllClicked)
+                    Spacer(Modifier.height(24.dp))
                 }
             }
-        }
-    }
-}
 
-@Composable
-private fun CategoryRow(category: ExpenseCategory, total: Double) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = CardPaper,
-        shadowElevation = 2.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Mint.copy(alpha = 0.15f),
-                modifier = Modifier.size(44.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(category.icon, contentDescription = null, tint = MintDeep, modifier = Modifier.size(22.dp))
-                }
-            }
-            Spacer(Modifier.size(14.dp))
-            Text(
-                category.displayName,
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = Ink
-            )
-            Text(
-                "£${"%.2f".format(total)}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Ink
-            )
         }
     }
 }
@@ -282,5 +220,108 @@ private fun EmptyHint(icon: ImageVector, text: String) {
             color = Muted,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
+    }
+}
+
+@Composable
+fun CategoryBarChart(
+    categoryTotals: List<CategoryTotal>,
+    onSeeAllClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (categoryTotals.isEmpty()) return
+
+    // The longest bar = the highest-spending category. Every other bar is drawn
+    // as a fraction of this, so bars are proportional to each other.
+    val maxTotal = categoryTotals.maxOf { it.total }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = CardPaper,
+        shadowElevation = 2.dp
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    "Spending by category",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Ink
+                )
+                Text(
+                    "See all",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MintDeep,
+                    modifier = Modifier.clickable { onSeeAllClicked() }
+                )
+            }
+            Spacer(Modifier.height(20.dp))
+
+            // Sorting biggest-first so the chart reads top-down by size
+            categoryTotals.sortedByDescending { it.total }.forEach { ct ->
+                BarRow(
+                    label = ct.category.displayName,
+                    amount = ct.total,
+                    fraction = (ct.total / maxTotal).toFloat()
+                )
+                Spacer(Modifier.height(14.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun BarRow(
+    label: String,
+    amount: Double,
+    fraction: Float
+) {
+    val animatedFraction by animateFloatAsState(
+        targetValue = fraction,
+        animationSpec = tween(durationMillis = 700),
+        label = "barGrow"
+    )
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = Ink
+            )
+            Text(
+                "£${"%.2f".format(amount)}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Ink
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(12.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(Muted.copy(alpha = 0.15f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(animatedFraction)
+                    .height(12.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Mint)
+            )
+        }
     }
 }
