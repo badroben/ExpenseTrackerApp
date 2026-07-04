@@ -27,31 +27,24 @@ fun AppNavGraph(
         navController = navController,
         startDestination = Routes.Dashboard.route,
         modifier = modifier,
-        // 1. ENTER: When going TO a new screen (Forward)
-        // Slide in from the Right edge
         enterTransition = {
             slideIntoContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Left,
                 animationSpec = tween(400) // 400ms duration
             )
         },
-        // 2. EXIT: The screen being covered moves slightly to the Left
         exitTransition = {
             slideOutOfContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Left,
                 animationSpec = tween(400)
             )
         },
-        // 3. POP ENTER: When coming BACK to a screen
-        // The previous screen slides back in from the Left
         popEnterTransition = {
             slideIntoContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Right,
                 animationSpec = tween(400)
             )
         },
-        // 4. POP EXIT: When leaving the current screen to go BACK
-        // The current screen slides away to the Right
         popExitTransition = {
             slideOutOfContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Right,
@@ -71,7 +64,7 @@ fun AppNavGraph(
         }
         composable(Routes.Expenses.route){
             ExpensesScreen(
-                onExpenseClicked = {navController.navigate(route = Routes.AddEditExpense.route)},
+                onExpenseClicked = {expense -> navController.navigate(Routes.AddEditExpense.createEditRoute(expense.id))},
                 onBackClicked = {navController.popBackStack()}
             )
         }
@@ -95,7 +88,13 @@ fun AppNavGraph(
                     if(existingExpense == null) {
                         expenseViewModel.addExpense(amount, category, date, note)
                     } else{
-                        expenseViewModel.updateExpense(existingExpense)
+                        expenseViewModel.updateExpense(
+                            existingExpense.copy(
+                                amount = amount,
+                                expenseCategory = category,
+                                note = note
+                            )
+                        )
                     }
                     navController.popBackStack()
 

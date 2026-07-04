@@ -1,5 +1,6 @@
 package com.example.expensetracker.ui.feature.addEditExpense
 
+import android.R.attr.fontWeight
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -52,9 +53,10 @@ fun AddEditExpenseScreen(
     onSave: (amount: Double, category: ExpenseCategory, date: Long, note: String?) -> Unit,
     existingExpense: ExpenseEntity?
 ) {
-    var amountText by remember { mutableStateOf(existingExpense?.amount?.toString() ?: "") }
-    var note by remember { mutableStateOf(existingExpense?.note ?: "") }
-    var selectedCategory by remember { mutableStateOf(existingExpense?.expenseCategory ?: ExpenseCategory.OTHER)}
+
+    var amountText by remember(existingExpense) { mutableStateOf(existingExpense?.amount?.toString() ?: "") }
+    var note by remember(existingExpense) { mutableStateOf(existingExpense?.note ?: "") }
+    var selectedCategory by remember(existingExpense) { mutableStateOf(existingExpense?.expenseCategory ?: ExpenseCategory.OTHER)}
 
     val fieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Mint,
@@ -67,7 +69,12 @@ fun AddEditExpenseScreen(
         containerColor = Paper,
         topBar = {
             TopAppBar(
-                title = { Text("Add expense", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        if(existingExpense == null) "Add expense" else "Edit expense",
+                        fontWeight = FontWeight.Bold
+                    )
+                        },
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

@@ -171,7 +171,6 @@ private fun ExpenseRow(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // ----- Always-visible summary row -----
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
@@ -215,14 +214,12 @@ private fun ExpenseRow(
                 )
             }
 
-            // ----- Expanded section: note + actions -----
             AnimatedVisibility(visible = expanded) {
                 Column {
                     Spacer(Modifier.height(14.dp))
                     HorizontalDivider(color = Muted.copy(alpha = 0.2f))
                     Spacer(Modifier.height(14.dp))
 
-                    // Full note (or a muted placeholder if none)
                     Text(
                         text = "Note",
                         style = MaterialTheme.typography.labelMedium,
