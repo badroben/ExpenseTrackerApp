@@ -22,6 +22,9 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -29,6 +32,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.expensetracker.data.local.CategoryTotal
 import com.example.expensetracker.domain.model.ExpenseCategory
+import com.example.expensetracker.domain.model.SpendingPeriod
 import com.example.expensetracker.ui.feature.expenses.ExpenseViewModel
 import com.example.expensetracker.ui.theme.CardPaper
 import com.example.expensetracker.ui.theme.Ink
@@ -54,11 +61,13 @@ fun DashboardScreen(
     onSeeAllClicked: () -> Unit,
     viewModel: ExpenseViewModel = hiltViewModel()
 ) {
+    var period by remember { mutableStateOf(SpendingPeriod.MONTH)}
     val uiState by viewModel.uiState.collectAsState()
-    val totalSpent = uiState.totalSpent
-    val monthSpent = uiState.monthSpent
     val categoryTotals: List<CategoryTotal> = uiState.categoryTotals
-
+    val displayedTotal = when (period){
+        SpendingPeriod.DAY -> uiState.dayTotal
+        SpendingPeriod.MONTH -> uiState.monthTotal
+    }
     Scaffold(
         containerColor = Paper,
         topBar = {
@@ -98,36 +107,83 @@ fun DashboardScreen(
                     color = Ink
                 ) {
                     Column(modifier = Modifier.padding(24.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                when (period) {
+                                    SpendingPeriod.DAY -> "Spent today"
+                                    SpendingPeriod.MONTH -> "Spent this month"
+                                },
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Muted,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            SingleChoiceSegmentedButtonRow {
+                                SegmentedButton(
+                                    selected = period == SpendingPeriod.DAY,
+                                    onClick = { period = SpendingPeriod.DAY },
+                                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                                    colors = SegmentedButtonDefaults.colors(
+                                        activeContainerColor = Mint,
+                                        activeContentColor = Ink,
+                                        inactiveContainerColor = Color.Transparent,
+                                        inactiveContentColor = Muted,
+                                        activeBorderColor = Mint,
+                                        inactiveBorderColor = Muted.copy(alpha = 0.4f)
+                                    )
+                                ) { Text("Day") }
+
+                                SegmentedButton(
+                                    selected = period == SpendingPeriod.MONTH,
+                                    onClick = { period = SpendingPeriod.MONTH },
+                                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                                    colors = SegmentedButtonDefaults.colors(
+                                        activeContainerColor = Mint,
+                                        activeContentColor = Ink,
+                                        inactiveContainerColor = Color.Transparent,
+                                        inactiveContentColor = Muted,
+                                        activeBorderColor = Mint,
+                                        inactiveBorderColor = Muted.copy(alpha = 0.4f)
+                                    )
+                                ) { Text("Month") }
+                            }
+                        }
+
+                        Spacer(Modifier.height(20.dp))
+
                         Text(
-                            "Spent this month",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = Muted
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            "£${"%.2f".format(monthSpent)}",
+                            "£${"%.2f".format(displayedTotal)}",
                             fontSize = 44.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
-                        Spacer(Modifier.height(16.dp))
-                        Row {
-                            Column {
-                                Text("All time", style = MaterialTheme.typography.labelMedium, color = Muted)
+
+                        Spacer(Modifier.height(20.dp))
+
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.align(Alignment.CenterEnd)) {
                                 Text(
-                                    "£${"%.2f".format(totalSpent)}",
+                                    "All time",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Muted,
+                                    modifier = Modifier.align(Alignment.End)
+                                )
+                                Text(
+                                    "£${"%.2f".format(uiState.monthTotal)}",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Mint
+                                    color = Mint,
+                                    modifier = Modifier.align(Alignment.End)
                                 )
                             }
                         }
                     }
                 }
             }
-
             item { Spacer(Modifier.height(24.dp)) }
-
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

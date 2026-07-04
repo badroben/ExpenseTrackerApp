@@ -29,5 +29,5 @@ class ExpenseRepositoryImpl @Inject constructor(
 
     override fun getCategorySummary(): Flow<List<CategoryTotal>> = dao.getCategorySummary()
 
-    override fun getMonthSummary(startOfMonth: Long): Flow<Double> = dao.getMonthSummary(startOfMonth)
+    override fun getSummarySince(since: Long): Flow<Double> = dao.getSummarySince(since)
 }

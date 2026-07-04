@@ -30,6 +30,6 @@ interface ExpenseDao{
     @Query("SELECT expenseCategory as category, SUM(amount) as total FROM expenses GROUP BY expenseCategory")
     fun getCategorySummary(): Flow<List<CategoryTotal>>
 
-    @Query("SELECT COALESCE(SUM(amount), 0.0) FROM expenses WHERE date >= :startOfMonth")
-    fun getMonthSummary(startOfMonth: Long): Flow<Double>
+    @Query("SELECT COALESCE(SUM(amount), 0.0) FROM expenses WHERE date >= :since")
+    fun getSummarySince(since: Long): Flow<Double>
 }

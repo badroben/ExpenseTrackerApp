@@ -12,5 +12,5 @@ interface ExpenseRepository {
     fun getAllExpenses(): Flow<List<ExpenseEntity>>
     fun getAmountSummary(): Flow<Double>
     fun getCategorySummary(): Flow<List<CategoryTotal>>
-    fun getMonthSummary(startOfMonth: Long): Flow<Double>
+    fun getSummarySince(since: Long): Flow<Double>
 }

@@ -22,14 +22,14 @@ class ExpenseViewModel @Inject constructor(
 
     val uiState: StateFlow<ExpenseUiState> = combine(
         repository.getAllExpenses(),
-        repository.getAmountSummary(),
-        repository.getMonthSummary(startOfMonth),
+        repository.getSummarySince(getStartOfDayMillis()),
+        repository.getSummarySince(getStartOfMonthMillis()),
         repository.getCategorySummary()
-    ) { expenses, total, month, categoryTotals ->
+    ) { expenses, dayTotal, monthTotal, categoryTotals ->
         ExpenseUiState(
             expenses = expenses,
-            totalSpent = total,
-            monthSpent = month,
+            dayTotal = dayTotal,
+            monthTotal = monthTotal,
             categoryTotals = categoryTotals
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExpenseUiState())
@@ -62,6 +62,15 @@ class ExpenseViewModel @Inject constructor(
     private fun getStartOfMonthMillis(): Long {
         val cal = Calendar.getInstance()
         cal.set(Calendar.DAY_OF_MONTH, 1)
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
+    }
+
+    private fun getStartOfDayMillis(): Long{
+        val cal = Calendar.getInstance()
         cal.set(Calendar.HOUR_OF_DAY, 0)
         cal.set(Calendar.MINUTE, 0)
         cal.set(Calendar.SECOND, 0)
